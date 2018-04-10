@@ -18,8 +18,6 @@ panels.
 * Adafruit SD card breakout board
 * Particle Photon
 * SD Card
-
-Optional
 * TensorFlow
 
 ## Required Libraries
