@@ -7,20 +7,19 @@
 #define SPI_CONFIGURATION 0
 // Primary SPI with DMA
 // SCK => A3, MISO => A4, MOSI => A5, SS => A2 (default)
+
+
+//Declarations
+ParticleSoftSerial cameraconnection = ParticleSoftSerial(D2, D3);
+Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
 SdFat sd;
 const uint8_t chipSelect = SS;
-
-
-ParticleSoftSerial cameraconnection = ParticleSoftSerial(D2, D3);
-
-Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
-
-int cameraLED = D5; // Blue
-
+String logFile = "sensor.log";
 
 //TCP Setup
 TCPClient client;
-byte server[] = { 192, 168, 1, 104}; // Local Phone
+byte server[] = {#,#,#,#}; // Local machine
+int port = #;
 
 void setup() {
     File myFile;
@@ -44,83 +43,72 @@ void setup() {
     //Unsure why this is needed (3/12/18)
     cam.begin();
 
-    // Try to locate the camera
+//Try to locate the camera
         if (cam.begin()) {
           Serial.println("Camera Found:");
         } else {
           Serial.println("No camera found?");
           //return;
         }
-        // Check for SD card
+//Check for SD card
         delay(1000);
         Serial.println("Initializing SD Card");
         if (!sd.begin(chipSelect, SPI_FULL_SPEED)) {
             sd.initErrorHalt();
         }
 
-
         delay(1000);
         cam.setImageSize(VC0706_640x480);        // biggest
         cam.setMotionDetect(true);           // turn it on
         cam.setCompression(99);
 
-
-
-
-        //Start write to SD card
-        if (!myFile.open("sensor.log", O_RDWR | O_CREAT | O_AT_END)) {
+//Start write to SD card by opening file
+        if (!myFile.open(logFile, O_RDWR | O_CREAT | O_AT_END)) {
             sd.errorHalt("opening sensor.log for write failed");
         }
-        // if the file opened okay, write to it:
+//If the file opened okay, write to it:
         Serial.println("Writing to sensor.log ...");
         myFile.printf("Startup complete: ");
         myFile.println(Time.timeStr() + "\n");
-        // close the file:
+//Close the file:
         myFile.close();
         Serial.println("Startup complete");
         Serial.println(Time.timeStr());
-        //Finish writing to SD
 
         Serial.println(WiFi.localIP());
-        if (client.connect(server,2221)) {
-            Serial.println("Connected to Server");
-        }
-
+        delay(50);
+        //client.connect(server,51234);
 }
 
 
 void loop() {
     File myFile;
-    //Serial.println(System.freeMemory());
-
-    //client.connect(server,8889);
-    //Serial.println(client.connect(server,8889));
-    //client.println("Hello World!");
-    //client.stop();
 
     if (cam.motionDetected()) {
        Serial.println("Motion!");
-       digitalWrite(D5,HIGH);
+//Turn off motion detect to keep buffer for saving image
        cam.setMotionDetect(false);
 
       if (! cam.takePicture())
         Serial.println("Failed to snap!");
       else
         Serial.println("Picture taken!");
-        client.println("Picture taken!");
+
 
 
       char filename[13];
+//Currently allows for up to 99 photos
       strcpy(filename, "IMAGE00.JPG");
       for (int i = 0; i < 100; i++) {
         filename[5] = '0' + i/10;
         filename[6] = '0' + i%10;
-        // create if does not exist, do not open existing, write, sync after write
+//Create if does not exist, do not open existing, write, sync after write
         if (! sd.exists(filename)) {
           break;
         }
       }
-      myFile.open("sensor.log",FILE_WRITE);
+//Print info to log file
+      myFile.open(logFile,FILE_WRITE);
       myFile.printf("Picture taken: ");
       myFile.printf(filename);
       myFile.printf(" ");
@@ -136,31 +124,35 @@ void loop() {
 
       Serial.print("Writing image to "); Serial.print(filename);
       int32_t time = millis();
+//While there is still data to read...
       while (jpglen > 0) {
-        // read 32 bytes at a time;
+// read 96 bytes at a time;
         uint8_t *buffer;
         uint8_t bytesToRead = min(96, jpglen); // change 32 to 64 for a speedup but may not work with all setups!
         buffer = cam.readPicture(bytesToRead);
-
-        //Serial.println(buffer.length());
+//Write the image
         imgFile.write(buffer, bytesToRead);
-
-        //Serial.print("Read ");  Serial.print(bytesToRead, DEC); Serial.println(" bytes");
-
         jpglen -= bytesToRead;
-        //Serial.println(System.freeMemory());
       }
+
       imgFile.close();
       Serial.println("...Done!");
       Serial.println("Sending file to server...");
+
       myFile.open(filename, O_READ);
-      //int data;
-/*    while ((data = myFile.read()) >= 0){
-          Serial.println(data, HEX);
-          //client.write(data);
+      int data;
+      long int now = millis();
+      if (client.connect(server,port)){
+          Serial.println("Connected!");
+          while ((data = myFile.read()) >= 0){
+              client.write(data);
+          }
+          client.stop();
       }
-*/
-      Particle.publish("Picture-Taken",filename);
+      long int sendTime = millis() - now;
+      Serial.printlnf("Time to write was: %d",sendTime);
+      //Particle.publish("Picture-Taken",filename);
+
 
       time = millis() - time;
       client.println(time);
