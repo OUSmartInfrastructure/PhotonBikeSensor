@@ -33,7 +33,7 @@ Note, the Adafruit VC0706 library is not a direct copy, and was modified to work
 original SerialSoft and NewSerial libraries to use the ParticleSerialSoft library. All references have to be replaced. 
 
 ## How to 
+Using the supplied code, your Photon, camera, and SD card can be wired up using the Fritzing diagram Found in the repository.
 
-//Add Fritzing Diagram
 //Add examples of results and images
 //Add Python scripts on the server side for receiving data
