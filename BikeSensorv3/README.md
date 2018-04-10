@@ -35,5 +35,11 @@ original SerialSoft and NewSerial libraries to use the ParticleSerialSoft librar
 ## How to 
 Using the supplied code, your Photon, camera, and SD card can be wired up using the Fritzing diagram Found in the repository.
 
+**==== Important ====**
+
+Some of Adafruit's image sensors have the colors reversed for TX and RX. I corrected the Fritzing diagram to 
+reflect what is in Adafruit's tutorial. In practice, the white and green wires may need to be flipped even if you follow this 
+project exactly. 
+
 //Add examples of results and images
 //Add Python scripts on the server side for receiving data
