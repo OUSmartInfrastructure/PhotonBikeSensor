@@ -15,6 +15,7 @@ Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
 SdFat sd;
 const uint8_t chipSelect = SS;
 String logFile = "sensor.log";
+//cameraDelay = 0;
 
 //TCP Setup
 TCPClient client;
@@ -32,7 +33,8 @@ void setup() {
     while (!Serial) {
         SysCall::yield();
     }
-
+//Press a button to start setup
+// This is being used for debug now, but will be disabled or removed
     while (Serial.read() <= 0) {
         SysCall::yield();
     }
@@ -88,16 +90,15 @@ void loop() {
        Serial.println("Motion!");
 //Turn off motion detect to keep buffer for saving image
        cam.setMotionDetect(false);
-
+        
+      //delay(cameraDelay) // To allow subjust to move a bit mroe into frame, untested    
       if (! cam.takePicture())
         Serial.println("Failed to snap!");
       else
         Serial.println("Picture taken!");
 
-
-
       char filename[13];
-//Currently allows for up to 99 photos
+//Currently allows for up to 99 photos to be saved to SD
       strcpy(filename, "IMAGE00.JPG");
       for (int i = 0; i < 100; i++) {
         filename[5] = '0' + i/10;
