@@ -2,8 +2,8 @@
 
 import socket, time, os, sys, copy
 
-ip = "132.235.160.114"
-port = 51234
+ip = "0.0.0.0"
+port = 54321
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((ip, port))
